@@ -1,0 +1,737 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+body {
+
+  margin: 0;
+
+  background: #11131a;
+
+  color: white;
+
+  font-family: "Rajdhani", sans-serif;
+
+}
+
+
+#root {
+
+  width: 100%;
+
+  min-height: 100vh;
+
+}
+
+
+.app {
+
+  min-height: 100vh;
+
+}
+
+
+/* =========================
+   Navigation
+========================= */
+
+
+.navbar {
+
+  width: 100%;
+
+  padding: 20px 40px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  background: #171a23;
+
+  border-bottom: 2px solid #252a38;
+
+}
+
+
+
+.mainTitle {
+
+  font-family: "Orbitron", sans-serif;
+
+  font-size: 38px;
+
+  font-weight: 900;
+
+  color: white;
+
+  margin: 0;
+
+}
+
+
+
+.navLinks {
+
+  display: flex;
+
+  gap: 30px;
+
+  align-items: center;
+
+}
+
+
+
+/* =========================
+   Animated GUI Buttons
+========================= */
+
+
+.guiButton {
+
+  width: 100px;
+
+  height: 100px;
+
+
+  background: #202534;
+
+  border: 2px solid transparent;
+
+  border-radius: 20px;
+
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+
+  padding: 10px;
+
+
+  cursor: pointer;
+
+
+  transition:
+
+    transform 0.2s ease,
+
+    background 0.2s ease,
+
+    box-shadow 0.2s ease,
+
+    border 0.2s ease;
+
+}
+
+
+
+/* Hover */
+
+.guiButton:hover {
+
+  transform: translateY(-8px) scale(1.08);
+
+  background: #303950;
+
+
+  border: 2px solid #7c3cff;
+
+
+  box-shadow:
+
+    0 0 20px rgba(124,60,255,0.6);
+
+}
+
+
+
+/* Click */
+
+.guiButton:active {
+
+  transform:
+
+    translateY(3px)
+
+    scale(0.95);
+
+
+  box-shadow:
+
+    0 0 5px rgba(124,60,255,0.3);
+
+}
+
+
+
+/* Images */
+
+.guiIcon {
+
+  width: 85px;
+
+  height: 85px;
+
+  object-fit: contain;
+
+
+  transition:
+
+    transform 0.2s ease;
+
+}
+
+
+
+.guiButton:hover .guiIcon {
+
+  transform: scale(1.05);
+
+}
+
+
+
+/* =========================
+   Pages
+========================= */
+
+
+main,
+.page,
+.questPage,
+.submitProof,
+.leaderboardPage,
+.profile {
+
+  width: 80%;
+
+  max-width: 900px;
+
+  margin: 40px auto;
+
+  text-align: center;
+
+}
+
+
+
+header {
+
+  text-align: center;
+
+  padding: 55px 20px 30px;
+
+}
+
+
+
+h1,
+h2 {
+
+  font-family: "Orbitron", sans-serif;
+
+  color: white;
+
+}
+
+
+
+header h1 {
+
+  font-size: 48px;
+
+  margin-bottom: 20px;
+
+}
+
+
+
+header p {
+
+  font-size: 22px;
+
+  line-height: 1.8;
+
+}
+
+
+
+/* Cards */
+
+section {
+
+  width: 80%;
+
+  max-width: 900px;
+
+  margin: 30px auto;
+
+  padding: 35px;
+
+
+  background: #1b202d;
+
+
+  border-radius: 25px;
+
+
+  text-align: center;
+
+
+  box-shadow:
+
+  0 10px 25px rgba(0,0,0,0.35);
+
+}
+
+
+
+section h1,
+section h2 {
+
+  margin-bottom: 25px;
+
+}
+
+
+
+p {
+
+  font-size: 20px;
+
+  line-height: 1.9;
+
+  margin-bottom: 18px;
+
+}
+
+
+
+/* Colors */
+
+
+.stats {
+
+  border-left: 7px solid #3498ff;
+
+}
+
+
+.quest {
+
+  border-left: 7px solid #39d353;
+
+}
+
+
+.leaderboard {
+
+  border-left: 7px solid #ff9d2e;
+
+}
+
+
+.profile {
+
+  border-left: 7px solid #a855f7;
+
+}
+
+
+
+/* Mobile */
+
+@media(max-width:800px){
+
+
+.navbar {
+
+  flex-direction: column;
+
+  gap:25px;
+
+}
+
+
+.navLinks {
+
+  gap:15px;
+
+  flex-wrap:wrap;
+
+  justify-content:center;
+
+}
+
+
+.guiButton {
+
+  width:80px;
+
+  height:80px;
+
+}
+
+
+.guiIcon {
+
+  width:65px;
+
+  height:65px;
+
+}
+
+
+section,
+main,
+.page,
+.questPage,
+.submitProof,
+.leaderboardPage,
+.profile {
+
+  width:90%;
+
+}
+
+
+}
+/* =========================
+   Roblox Connection
+========================= */
+
+
+.robloxAccount,
+.profileStats {
+
+  background: #252b3d;
+
+  padding: 30px;
+
+  border-radius: 20px;
+
+  margin-top: 25px;
+
+  border: 2px solid #30384d;
+
+}
+
+
+
+.robloxAccount {
+
+  border-left: 7px solid #ff4747;
+
+}
+
+
+
+.profileStats {
+
+  border-left: 7px solid #a855f7;
+
+}
+
+
+
+.connectButton {
+
+  margin-top: 15px;
+
+  padding: 15px 25px;
+
+  border-radius: 15px;
+
+  border: none;
+
+  background: #7c3cff;
+
+  color: white;
+
+  font-family: "Orbitron", sans-serif;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+
+}
+
+
+
+.connectButton:hover {
+
+  transform: scale(1.05);
+
+  box-shadow:
+
+  0 0 20px rgba(124,60,255,0.6);
+
+}
+.topGUIs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 30px;
+}
+
+.questLivesLogo {
+  width: 360px;
+}
+
+.pointsGUI {
+  width: 150px;
+}
+.navbarLogo {
+  width: 220px;
+  height: auto;
+}
+
+.smallPointsIcon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+/* =========================
+   Quest Lives Custom Cards
+========================= */
+
+
+/* Current Quest */
+
+.questInfoCard {
+
+  background: #1b2538;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  width: 80%;
+
+  max-width: 900px;
+
+  border-left: 7px solid #39d353;
+
+  box-shadow:
+    0 10px 25px rgba(0,0,0,0.35);
+
+}
+
+
+
+/* Rewards */
+
+.rewardCard {
+
+  background: #302817;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  width: 80%;
+
+  max-width: 900px;
+
+  border-left: 7px solid #ffd700;
+
+  box-shadow:
+    0 10px 25px rgba(255,215,0,0.15);
+
+}
+
+
+
+
+/* Proof */
+
+.proofCard {
+
+  background: #182b3d;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  width: 80%;
+
+  max-width: 900px;
+
+  border-left: 7px solid #3498ff;
+
+  box-shadow:
+    0 10px 25px rgba(52,152,255,0.15);
+
+}
+
+
+
+
+
+/* Status */
+
+.statusCard {
+
+  background: #292438;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  width: 80%;
+
+  max-width: 900px;
+
+  border-left: 7px solid #a855f7;
+
+  box-shadow:
+    0 10px 25px rgba(168,85,247,0.15);
+
+}
+
+
+
+
+
+/* Spin */
+
+.spinCard {
+
+  background: #261b3d;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  width: 80%;
+
+  max-width: 900px;
+
+  border-left: 7px solid #ff5cff;
+
+  box-shadow:
+    0 10px 25px rgba(255,92,255,0.2);
+
+}
+
+
+
+
+
+/* QLAI */
+
+.aiCard {
+
+  background: #151c30;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  width: 80%;
+
+  max-width: 900px;
+
+  border-left: 7px solid #00e5ff;
+
+  box-shadow:
+    0 10px 30px rgba(0,229,255,0.25);
+
+}
+
+
+
+
+
+/* Approved */
+
+.approvedBox {
+
+  background: #173522;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  border-left: 7px solid #39d353;
+
+}
+
+
+
+
+
+/* Rejected */
+
+.rejectedBox {
+
+  background: #351717;
+
+  border-radius: 25px;
+
+  padding: 35px;
+
+  margin: 25px auto;
+
+  border-left: 7px solid #ff4747;
+
+}
+
+
+
+
+
+/* Card hover effects */
+
+.questInfoCard,
+.rewardCard,
+.proofCard,
+.statusCard,
+.spinCard,
+.aiCard {
+
+  transition: 
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+
+}
+
+
+
+.questInfoCard:hover,
+.rewardCard:hover,
+.proofCard:hover,
+.statusCard:hover,
+.spinCard:hover,
+.aiCard:hover {
+
+  transform: translateY(-5px);
+
+}

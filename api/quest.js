@@ -3,8 +3,44 @@ import { neon } from "@neondatabase/serverless";
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
+  //==================================================
+  // CORS
+  //==================================================
+
+  res.setHeader(
+    "Access-Control-Allow-Origin",
+    "*"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, OPTIONS"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
+
+  // TEST HEADER
+  res.setHeader(
+    "X-Quest-Lives-CORS-Test",
+    "working"
+  );
+
+  //==================================================
+  // CORS PREFLIGHT
+  //==================================================
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   try {
-    // Create the players table if it doesn't exist yet.
+    //==================================================
+    // CREATE PLAYERS TABLE
+    //==================================================
+
     await sql`
       CREATE TABLE IF NOT EXISTS players (
         roblox_user_id TEXT PRIMARY KEY,
@@ -16,15 +52,19 @@ export default async function handler(req, res) {
       )
     `;
 
+    //==================================================
     // GET
-    // Returns a player's saved data.
+    //==================================================
+
     if (req.method === "GET") {
-      const robloxUserId = req.query?.userId;
+      const robloxUserId =
+        req.query?.userId;
 
       if (!robloxUserId) {
         return res.status(400).json({
           success: false,
-          error: "A Roblox userId is required.",
+          error:
+            "A Roblox userId is required.",
         });
       }
 
@@ -37,7 +77,8 @@ export default async function handler(req, res) {
           quests_completed,
           updated_at
         FROM players
-        WHERE roblox_user_id = ${String(robloxUserId)}
+        WHERE roblox_user_id =
+          ${String(robloxUserId)}
       `;
 
       if (players.length === 0) {
@@ -53,8 +94,10 @@ export default async function handler(req, res) {
       });
     }
 
+    //==================================================
     // POST
-    // Creates or updates a player's current quest.
+    //==================================================
+
     if (req.method === "POST") {
       const {
         userId,
@@ -64,14 +107,16 @@ export default async function handler(req, res) {
       if (!userId) {
         return res.status(400).json({
           success: false,
-          error: "A Roblox userId is required.",
+          error:
+            "A Roblox userId is required.",
         });
       }
 
       if (!quest) {
         return res.status(400).json({
           success: false,
-          error: "A quest is required.",
+          error:
+            "A quest is required.",
         });
       }
 
@@ -88,7 +133,8 @@ export default async function handler(req, res) {
         )
         ON CONFLICT (roblox_user_id)
         DO UPDATE SET
-          current_quest = EXCLUDED.current_quest,
+          current_quest =
+            EXCLUDED.current_quest,
           updated_at = NOW()
         RETURNING
           roblox_user_id,
@@ -105,18 +151,31 @@ export default async function handler(req, res) {
       });
     }
 
-    res.setHeader("Allow", ["GET", "POST"]);
+    //==================================================
+    // METHOD NOT ALLOWED
+    //==================================================
+
+    res.setHeader(
+      "Allow",
+      ["GET", "POST", "OPTIONS"]
+    );
 
     return res.status(405).json({
       success: false,
       error: "Method not allowed.",
     });
+
   } catch (error) {
-    console.error("Quest API error:", error);
+    console.error(
+      "Quest API error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      error: "Internal server error.",
+      error:
+        "Internal server error.",
     });
   }
 }
+

@@ -1,14 +1,28 @@
-/* Quest Lives Website Styling */
+/* =====================================================
+   QUEST LIVES - GLOBAL STYLES
+===================================================== */
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  width: 100%;
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
+  width: 100%;
+  min-height: 100vh;
+
   font-family: "Segoe UI", Arial, sans-serif;
+
   background: #11131a;
   color: white;
+
+  overflow-x: hidden;
 }
 
 #root {
@@ -16,20 +30,44 @@ body {
   min-height: 100vh;
 }
 
-
-/* Main App */
-
 .app {
   width: 100%;
   min-height: 100vh;
 }
 
+/* =====================================================
+   GLOBAL ELEMENTS
+===================================================== */
 
-/* Navigation */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+/* IMPORTANT:
+   Do NOT globally style all sections here.
+   Each page controls its own section width, spacing,
+   background, and layout.
+*/
+
+p {
+  line-height: 1.7;
+}
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
 
 .navbar {
   width: 100%;
+
   padding: 20px 40px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -38,48 +76,46 @@ body {
   border-bottom: 2px solid #252a38;
 }
 
-
 .mainTitle {
-  font-size: 36px;
-  color: white;
   margin: 0;
+
+  font-size: 36px;
+
+  color: white;
 }
-
-
-/* Buttons */
 
 .navLinks {
   display: flex;
-  gap: 30px;
   align-items: center;
-}
 
+  gap: 30px;
+}
 
 .guiButton {
   width: 100px;
   height: 100px;
 
-  background: #202534;
+  padding: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   border: none;
   border-radius: 20px;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  padding: 10px;
+  background: #202534;
 
   cursor: pointer;
 
   transition: 0.2s ease;
 }
 
-
 .guiButton:hover {
   transform: scale(1.08);
+
   background: #2d354b;
 }
-
 
 .guiIcon {
   width: 85px;
@@ -88,128 +124,37 @@ body {
   object-fit: contain;
 }
 
-
-/* Page Layout */
-
-header {
-  padding: 50px 20px 30px;
-}
-
-
-header h1 {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
-
-header p {
-  font-size: 20px;
-  line-height: 1.8;
-}
-
-
-/* Cards */
-
-section {
-  width: 80%;
-  max-width: 900px;
-
-  margin: 30px auto;
-  padding: 30px;
-
-  background: #1b202d;
-
-  border-radius: 25px;
-
-  box-shadow:
-    0 10px 25px rgba(0,0,0,0.35);
-}
-
-
-section h2 {
-  margin-bottom: 25px;
-  font-size: 28px;
-}
-
-
-/* Text Spacing */
-
-p {
-  font-size: 18px;
-
-  line-height: 1.9;
-
-  margin-bottom: 18px;
-}
-
-
-/* Stats */
-
-.stats {
-  border-left: 6px solid #3498ff;
-}
-
-
-/* Quest */
-
-.quest {
-  border-left: 6px solid #39d353;
-}
-
-
-/* Leaderboard */
-
-.leaderboard {
-  border-left: 6px solid #ff9d2e;
-}
-
-
-/* Links */
-
-a {
-  text-decoration: none;
-}
-
-
-/* Forms */
-
-input,
-button {
-  font-family: inherit;
-}
-
-
-/* Mobile */
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media (max-width: 800px) {
-
   .navbar {
     flex-direction: column;
-    gap: 25px;
-  }
 
+    gap: 25px;
+
+    padding: 20px;
+  }
 
   .navLinks {
-    gap: 15px;
     flex-wrap: wrap;
     justify-content: center;
-  }
 
+    gap: 15px;
+  }
 
   .guiButton {
     width: 80px;
     height: 80px;
   }
 
-
   .guiIcon {
     width: 65px;
     height: 65px;
   }
 
-
-  section {
-    width: 90%;
+  .mainTitle {
+    font-size: 28px;
   }
-
 }

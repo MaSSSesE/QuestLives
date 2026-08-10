@@ -9,6 +9,16 @@ const API_URL =
 const QLAI_URL =
   "https://quest-lives.vercel.app/api/qlai";
 
+//==================================================
+// CURRENT ROBLOX USER
+//==================================================
+// Temporary system while we build the proper
+// player authentication system.
+//
+// IMPORTANT:
+// This is currently hardcoded and will eventually
+// be replaced with secure player identification.
+
 const ROBLOX_USER_ID =
   "343054291";
 
@@ -167,6 +177,15 @@ function SubmitProof() {
           questDescription:
             currentQuest?.description ||
             "",
+
+          //==================================================
+          // PLAYER ID
+          //==================================================
+          // Sent to QLAI so the proof can be associated
+          // with the current player in Supabase.
+
+          playerId:
+            ROBLOX_USER_ID,
         }),
       });
 
@@ -177,6 +196,25 @@ function SubmitProof() {
       "QLAI response:",
       data
     );
+
+    //==================================================
+    // DUPLICATE PROOF
+    //==================================================
+
+    if (
+      response.status === 409 &&
+      data.duplicate
+    ) {
+      return {
+        ...data,
+
+        duplicate: true,
+      };
+    }
+
+    //==================================================
+    // NORMAL ERROR
+    //==================================================
 
     if (
       !response.ok ||
@@ -274,6 +312,29 @@ function SubmitProof() {
       const result =
         await analyzeWithQLAI();
 
+      //==================================================
+      // DUPLICATE PROOF
+      //==================================================
+
+      if (result.duplicate) {
+        setConfidence(0);
+
+        setReason(
+          result.reason ||
+          "This proof has already been submitted."
+        );
+
+        setStatus(
+          "duplicate"
+        );
+
+        return;
+      }
+
+      //==================================================
+      // QLAI RESULT
+      //==================================================
+
       setConfidence(
         result.confidence
       );
@@ -281,6 +342,10 @@ function SubmitProof() {
       setReason(
         result.reason
       );
+
+      //==================================================
+      // APPROVED
+      //==================================================
 
       if (result.approved) {
         const approvalSuccessful =
@@ -295,6 +360,10 @@ function SubmitProof() {
             "approvalError"
           );
         }
+
+      //==================================================
+      // REJECTED
+      //==================================================
 
       } else {
         setStatus(
@@ -884,6 +953,83 @@ function SubmitProof() {
             onClick={retry}
           >
             Try Again
+          </button>
+
+        </div>
+
+      )}
+
+
+      {/* =========================
+          DUPLICATE PROOF
+      ========================= */}
+
+      {status === "duplicate" && (
+
+        <div className="resultPanel rejectedPanel">
+
+          <div className="resultBadge rejectedBadge">
+            DUPLICATE PROOF
+          </div>
+
+
+          <h2>
+            Proof Already Submitted
+          </h2>
+
+
+          <p>
+            This exact image has already been
+            submitted as Quest Lives proof.
+          </p>
+
+
+          {reason && (
+            <p>
+              <strong>
+                QLAI:
+              </strong>{" "}
+              {reason}
+            </p>
+          )}
+
+
+          <div className="resultStats">
+
+            <div>
+
+              <span>
+                STATUS
+              </span>
+
+              <strong>
+                REJECTED
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                ACTION
+              </span>
+
+              <strong>
+                NEW PHOTO
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            className="retryButton"
+            onClick={retry}
+          >
+            Submit Different Proof
           </button>
 
         </div>

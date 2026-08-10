@@ -3,308 +3,445 @@ import { neon } from "@neondatabase/serverless";
 const sql = neon(process.env.DATABASE_URL);
 
 export default async function handler(req, res) {
-  //==================================================
-  // CORS
-  //==================================================
 
-  res.setHeader(
-    "Access-Control-Allow-Origin",
-    "*"
-  );
+//==================================================
+// CORS
+//==================================================
 
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS"
-  );
+res.setHeader(
+"Access-Control-Allow-Origin",
+"*"
+);
 
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type"
-  );
+res.setHeader(
+"Access-Control-Allow-Methods",
+"GET, POST, OPTIONS"
+);
 
-  // TEST HEADER
-  res.setHeader(
-    "X-Quest-Lives-CORS-Test",
-    "working"
-  );
+res.setHeader(
+"Access-Control-Allow-Headers",
+"Content-Type"
+);
 
-  //==================================================
-  // CORS PREFLIGHT
-  //==================================================
+res.setHeader(
+"X-Quest-Lives-CORS-Test",
+"working"
+);
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+//==================================================
+// CORS PREFLIGHT
+//==================================================
 
-  try {
-    //==================================================
-    // CREATE PLAYERS TABLE
-    //==================================================
+if (req.method === "OPTIONS") {
+return res.status(200).end();
+}
 
-    await sql`
-      CREATE TABLE IF NOT EXISTS players (
-        roblox_user_id TEXT PRIMARY KEY,
-        current_quest JSONB,
-        points INTEGER NOT NULL DEFAULT 0,
-        tickets INTEGER NOT NULL DEFAULT 0,
-        quests_completed INTEGER NOT NULL DEFAULT 0,
-        quest_approved BOOLEAN NOT NULL DEFAULT FALSE,
-        quest_claimed BOOLEAN NOT NULL DEFAULT FALSE,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `;
+try {
 
-    //==================================================
-    // ADD NEW COLUMNS TO EXISTING TABLE
-    //==================================================
+//==================================================
+// CREATE PLAYERS TABLE
+//==================================================
 
-    await sql`
-      ALTER TABLE players
-      ADD COLUMN IF NOT EXISTS quest_approved BOOLEAN
-      NOT NULL DEFAULT FALSE
-    `;
+await sql`
+  CREATE TABLE IF NOT EXISTS players (
+    roblox_user_id TEXT PRIMARY KEY,
+    current_quest JSONB,
+    points INTEGER NOT NULL DEFAULT 0,
+    tickets INTEGER NOT NULL DEFAULT 0,
+    quests_completed INTEGER NOT NULL DEFAULT 0,
+    quest_approved BOOLEAN NOT NULL DEFAULT FALSE,
+    quest_claimed BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )
+`;
 
-    await sql`
-      ALTER TABLE players
-      ADD COLUMN IF NOT EXISTS quest_claimed BOOLEAN
-      NOT NULL DEFAULT FALSE
-    `;
+//==================================================
+// ADD NEW COLUMNS TO EXISTING TABLE
+//==================================================
 
-    //==================================================
-    // GET
-    //==================================================
+await sql`
+  ALTER TABLE players
+  ADD COLUMN IF NOT EXISTS quest_approved BOOLEAN
+  NOT NULL DEFAULT FALSE
+`;
 
-    if (req.method === "GET") {
-      const robloxUserId =
-        req.query?.userId;
+await sql`
+  ALTER TABLE players
+  ADD COLUMN IF NOT EXISTS quest_claimed BOOLEAN
+  NOT NULL DEFAULT FALSE
+`;
 
-      if (!robloxUserId) {
-        return res.status(400).json({
-          success: false,
-          error:
-            "A Roblox userId is required.",
-        });
-      }
+//==================================================
+// GET PLAYER DATA
+//==================================================
 
-      const players = await sql`
-        SELECT
-          roblox_user_id,
-          current_quest,
-          points,
-          tickets,
-          quests_completed,
-          quest_approved,
-          quest_claimed,
-          updated_at
-        FROM players
-        WHERE roblox_user_id =
-          ${String(robloxUserId)}
-      `;
+if (req.method === "GET") {
 
-      if (players.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: "Player not found.",
-        });
-      }
+  const robloxUserId =
+    req.query?.userId;
 
-      return res.status(200).json({
-        success: true,
-        player: players[0],
-      });
-    }
+  if (!robloxUserId) {
 
-    //==================================================
-    // POST
-    //==================================================
-
-    if (req.method === "POST") {
-      const {
-        userId,
-        quest,
-        action,
-      } = req.body || {};
-
-      //================================================
-      // APPROVE QUEST
-      //================================================
-
-      if (action === "approve") {
-        if (!userId) {
-          return res.status(400).json({
-            success: false,
-            error:
-              "A Roblox userId is required.",
-          });
-        }
-
-        const player = await sql`
-          UPDATE players
-          SET
-            quest_approved = TRUE,
-            quest_claimed = FALSE,
-            updated_at = NOW()
-          WHERE roblox_user_id =
-            ${String(userId)}
-          RETURNING
-            roblox_user_id,
-            current_quest,
-            points,
-            tickets,
-            quests_completed,
-            quest_approved,
-            quest_claimed,
-            updated_at
-        `;
-
-        if (player.length === 0) {
-          return res.status(404).json({
-            success: false,
-            error: "Player not found.",
-          });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Quest approved.",
-          player: player[0],
-        });
-      }
-
-      //================================================
-      // CLAIM QUEST
-      //================================================
-
-      if (action === "claim") {
-        if (!userId) {
-          return res.status(400).json({
-            success: false,
-            error:
-              "A Roblox userId is required.",
-          });
-        }
-
-        const player = await sql`
-          UPDATE players
-          SET
-            quest_claimed = TRUE,
-            quest_approved = FALSE,
-            updated_at = NOW()
-          WHERE roblox_user_id =
-            ${String(userId)}
-            AND quest_approved = TRUE
-            AND quest_claimed = FALSE
-          RETURNING
-            roblox_user_id,
-            current_quest,
-            points,
-            tickets,
-            quests_completed,
-            quest_approved,
-            quest_claimed,
-            updated_at
-        `;
-
-        if (player.length === 0) {
-          return res.status(400).json({
-            success: false,
-            error:
-              "No approved unclaimed quest exists.",
-          });
-        }
-
-        return res.status(200).json({
-          success: true,
-          message: "Quest claimed.",
-          player: player[0],
-        });
-      }
-
-      //================================================
-      // NORMAL QUEST SAVE
-      //================================================
-
-      if (!userId) {
-        return res.status(400).json({
-          success: false,
-          error:
-            "A Roblox userId is required.",
-        });
-      }
-
-      if (!quest) {
-        return res.status(400).json({
-          success: false,
-          error:
-            "A quest is required.",
-        });
-      }
-
-      const player = await sql`
-        INSERT INTO players (
-          roblox_user_id,
-          current_quest,
-          quest_approved,
-          quest_claimed,
-          updated_at
-        )
-        VALUES (
-          ${String(userId)},
-          ${JSON.stringify(quest)}::jsonb,
-          FALSE,
-          FALSE,
-          NOW()
-        )
-        ON CONFLICT (roblox_user_id)
-        DO UPDATE SET
-          current_quest =
-            EXCLUDED.current_quest,
-          quest_approved =
-            FALSE,
-          quest_claimed =
-            FALSE,
-          updated_at = NOW()
-        RETURNING
-          roblox_user_id,
-          current_quest,
-          points,
-          tickets,
-          quests_completed,
-          quest_approved,
-          quest_claimed,
-          updated_at
-      `;
-
-      return res.status(200).json({
-        success: true,
-        player: player[0],
-      });
-    }
-
-    //==================================================
-    // METHOD NOT ALLOWED
-    //==================================================
-
-    res.setHeader(
-      "Allow",
-      ["GET", "POST", "OPTIONS"]
-    );
-
-    return res.status(405).json({
-      success: false,
-      error: "Method not allowed.",
-    });
-
-  } catch (error) {
-    console.error(
-      "Quest API error:",
-      error
-    );
-
-    return res.status(500).json({
+    return res.status(400).json({
       success: false,
       error:
-        "Internal server error.",
+        "A Roblox userId is required.",
     });
+
   }
+
+  const players = await sql`
+    SELECT
+      roblox_user_id,
+      current_quest,
+      points,
+      tickets,
+      quests_completed,
+      quest_approved,
+      quest_claimed,
+      updated_at
+    FROM players
+    WHERE roblox_user_id =
+      ${String(robloxUserId)}
+  `;
+
+  if (players.length === 0) {
+
+    return res.status(404).json({
+      success: false,
+      error: "Player not found.",
+    });
+
+  }
+
+  return res.status(200).json({
+    success: true,
+    player: players[0],
+  });
+
+}
+
+//==================================================
+// POST
+//==================================================
+
+if (req.method === "POST") {
+
+  const {
+    userId,
+    quest,
+    action,
+    points,
+    tickets,
+    questsCompleted,
+  } = req.body || {};
+
+  //================================================
+  // SYNC PLAYER STATS FROM ROBLOX
+  //================================================
+
+  if (action === "syncStats") {
+
+    if (!userId) {
+
+      return res.status(400).json({
+        success: false,
+        error:
+          "A Roblox userId is required.",
+      });
+
+    }
+
+    const syncedPoints =
+      Math.max(
+        0,
+        Number(points) || 0
+      );
+
+    const syncedTickets =
+      Math.max(
+        0,
+        Number(tickets) || 0
+      );
+
+    const syncedQuestsCompleted =
+      Math.max(
+        0,
+        Number(questsCompleted) || 0
+      );
+
+    const player = await sql`
+
+      UPDATE players
+
+      SET
+
+        points =
+          ${syncedPoints},
+
+        tickets =
+          ${syncedTickets},
+
+        quests_completed =
+          ${syncedQuestsCompleted},
+
+        updated_at =
+          NOW()
+
+      WHERE roblox_user_id =
+        ${String(userId)}
+
+      RETURNING
+        roblox_user_id,
+        current_quest,
+        points,
+        tickets,
+        quests_completed,
+        quest_approved,
+        quest_claimed,
+        updated_at
+
+    `;
+
+    if (player.length === 0) {
+
+      return res.status(404).json({
+        success: false,
+        error: "Player not found.",
+      });
+
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Player stats synced successfully.",
+      player: player[0],
+    });
+
+  }
+
+  //================================================
+  // APPROVE QUEST
+  //================================================
+
+  if (action === "approve") {
+
+    if (!userId) {
+
+      return res.status(400).json({
+        success: false,
+        error:
+          "A Roblox userId is required.",
+      });
+
+    }
+
+    const player = await sql`
+
+      UPDATE players
+
+      SET
+        quest_approved = TRUE,
+        quest_claimed = FALSE,
+        updated_at = NOW()
+
+      WHERE roblox_user_id =
+        ${String(userId)}
+
+      RETURNING
+        roblox_user_id,
+        current_quest,
+        points,
+        tickets,
+        quests_completed,
+        quest_approved,
+        quest_claimed,
+        updated_at
+
+    `;
+
+    if (player.length === 0) {
+
+      return res.status(404).json({
+        success: false,
+        error: "Player not found.",
+      });
+
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Quest approved.",
+      player: player[0],
+    });
+
+  }
+
+  //================================================
+  // CLAIM QUEST
+  //================================================
+
+  if (action === "claim") {
+
+    if (!userId) {
+
+      return res.status(400).json({
+        success: false,
+        error:
+          "A Roblox userId is required.",
+      });
+
+    }
+
+    const player = await sql`
+
+      UPDATE players
+
+      SET
+        quest_claimed = TRUE,
+        quest_approved = FALSE,
+        updated_at = NOW()
+
+      WHERE roblox_user_id =
+        ${String(userId)}
+        AND quest_approved = TRUE
+        AND quest_claimed = FALSE
+
+      RETURNING
+        roblox_user_id,
+        current_quest,
+        points,
+        tickets,
+        quests_completed,
+        quest_approved,
+        quest_claimed,
+        updated_at
+
+    `;
+
+    if (player.length === 0) {
+
+      return res.status(400).json({
+        success: false,
+        error:
+          "No approved unclaimed quest exists.",
+      });
+
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Quest claimed.",
+      player: player[0],
+    });
+
+  }
+
+  //================================================
+  // NORMAL QUEST SAVE
+  //================================================
+
+  if (!userId) {
+
+    return res.status(400).json({
+      success: false,
+      error:
+        "A Roblox userId is required.",
+    });
+
+  }
+
+  if (!quest) {
+
+    return res.status(400).json({
+      success: false,
+      error:
+        "A quest is required.",
+    });
+
+  }
+
+  const player = await sql`
+
+    INSERT INTO players (
+      roblox_user_id,
+      current_quest,
+      quest_approved,
+      quest_claimed,
+      updated_at
+    )
+
+    VALUES (
+      ${String(userId)},
+      ${JSON.stringify(quest)}::jsonb,
+      FALSE,
+      FALSE,
+      NOW()
+    )
+
+    ON CONFLICT (roblox_user_id)
+
+    DO UPDATE SET
+
+      current_quest =
+        EXCLUDED.current_quest,
+
+      quest_approved =
+        FALSE,
+
+      quest_claimed =
+        FALSE,
+
+      updated_at =
+        NOW()
+
+    RETURNING
+      roblox_user_id,
+      current_quest,
+      points,
+      tickets,
+      quests_completed,
+      quest_approved,
+      quest_claimed,
+      updated_at
+
+  `;
+
+  return res.status(200).json({
+    success: true,
+    player: player[0],
+  });
+
+}
+
+//==================================================
+// METHOD NOT ALLOWED
+//==================================================
+
+res.setHeader(
+  "Allow",
+  ["GET", "POST", "OPTIONS"]
+);
+
+return res.status(405).json({
+  success: false,
+  error: "Method not allowed.",
+});
+
+} catch (error) {
+
+console.error(
+  "Quest API error:",
+  error
+);
+
+return res.status(500).json({
+  success: false,
+  error:
+    "Internal server error.",
+});
+
+}
+
 }

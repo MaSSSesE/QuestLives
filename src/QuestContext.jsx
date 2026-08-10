@@ -4,162 +4,271 @@ import quests from "./data/Quests";
 export const QuestContext = createContext();
 
 const API_URL =
-  "https://quest-lives.vercel.app/api/quest";
+"https://quest-lives.vercel.app/api/quest";
 
 const ROBLOX_USER_ID =
-  "343054291";
+"343054291";
+
+//==================================================
+// GET STARTING QUEST
+//==================================================
 
 function getStartingQuest() {
-  const savedQuest =
-    localStorage.getItem("currentQuest");
+const savedQuest =
+localStorage.getItem("currentQuest");
 
-  if (savedQuest) {
-    try {
-      return JSON.parse(savedQuest);
-    } catch {
-      localStorage.removeItem("currentQuest");
-    }
-  }
-
-  return null;
+if (savedQuest) {
+try {
+return JSON.parse(savedQuest);
+} catch {
+localStorage.removeItem("currentQuest");
+}
 }
 
+return null;
+}
+
+//==================================================
+// GET STARTING PLAYER STATS
+//==================================================
+
+function getStartingStats() {
+const savedStats =
+localStorage.getItem("questLivesStats");
+
+if (savedStats) {
+try {
+return JSON.parse(savedStats);
+} catch {
+localStorage.removeItem("questLivesStats");
+}
+}
+
+return {
+points: 0,
+tickets: 0,
+questsCompleted: 0,
+};
+}
+
+//==================================================
+// QUEST PROVIDER
+//==================================================
+
 export function QuestProvider({ children }) {
-  const [currentQuest, setCurrentQuest] =
-    useState(getStartingQuest);
 
-  const [loadingQuest, setLoadingQuest] =
-    useState(true);
+const [currentQuest, setCurrentQuest] =
+useState(getStartingQuest);
 
-  const [connectionError, setConnectionError] =
-    useState(false);
+const [playerStats, setPlayerStats] =
+useState(getStartingStats);
 
-  //==================================================
-  // LOAD QUEST FROM ROBLOX / NEON
-  //==================================================
+const [loadingQuest, setLoadingQuest] =
+useState(true);
 
-  useEffect(() => {
-    async function loadQuestFromRoblox() {
-      try {
-        setLoadingQuest(true);
-        setConnectionError(false);
+const [connectionError, setConnectionError] =
+useState(false);
 
-        const response = await fetch(
-          `${API_URL}?userId=${ROBLOX_USER_ID}`
-        );
+//==================================================
+// LOAD PLAYER DATA FROM ROBLOX / NEON
+//==================================================
 
-        if (response.status === 404) {
-          console.log(
-            "No saved Roblox quest found yet."
-          );
+useEffect(() => {
 
-          setLoadingQuest(false);
+async function loadPlayerDataFromRoblox() {
 
-          return;
-        }
+  try {
 
-        if (!response.ok) {
-          throw new Error(
-            `Quest API returned ${response.status}`
-          );
-        }
+    setLoadingQuest(true);
+    setConnectionError(false);
 
-        const data =
-          await response.json();
+    const response = await fetch(
+      `${API_URL}?userId=${ROBLOX_USER_ID}`
+    );
 
-        console.log(
-          "Quest Lives API response:",
-          data
-        );
+    if (response.status === 404) {
 
-        if (
-          data.success &&
-          data.player &&
-          data.player.current_quest
-        ) {
-          const quest =
-            data.player.current_quest;
+      console.log(
+        "No saved Roblox player data found yet."
+      );
 
-          const formattedQuest = {
-            name:
-              quest.name,
+      setLoadingQuest(false);
 
-            description:
-              quest.description,
+      return;
 
-            reward:
-              quest.reward
-          };
-
-          setCurrentQuest(
-            formattedQuest
-          );
-
-          localStorage.setItem(
-            "currentQuest",
-            JSON.stringify(
-              formattedQuest
-            )
-          );
-
-          console.log(
-            "Quest loaded from Roblox:",
-            formattedQuest
-          );
-        } else {
-          console.log(
-            "No current quest was found for this Roblox player."
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Failed to load quest from Quest Lives API:",
-          error
-        );
-
-        setConnectionError(true);
-      } finally {
-        setLoadingQuest(false);
-      }
     }
 
-    loadQuestFromRoblox();
-  }, []);
+    if (!response.ok) {
 
-  //==================================================
-  // LOCAL QUEST SPIN
-  //==================================================
+      throw new Error(
+        `Quest API returned ${response.status}`
+      );
 
-  function spinQuest() {
-    const newQuest =
-      quests[
-        Math.floor(
-          Math.random() * quests.length
-        )
-      ];
+    }
 
-    setCurrentQuest(newQuest);
+    const data =
+      await response.json();
 
-    localStorage.setItem(
-      "currentQuest",
-      JSON.stringify(newQuest)
+    console.log(
+      "Quest Lives API response:",
+      data
     );
+
+    if (
+      data.success &&
+      data.player
+    ) {
+
+      const player =
+        data.player;
+
+      //==============================================
+      // LOAD CURRENT QUEST
+      //==============================================
+
+      if (player.current_quest) {
+
+        const quest = {
+          name:
+            player.current_quest.name,
+
+          description:
+            player.current_quest.description,
+
+          reward:
+            player.current_quest.reward
+        };
+
+        setCurrentQuest(quest);
+
+        localStorage.setItem(
+          "currentQuest",
+          JSON.stringify(quest)
+        );
+
+        console.log(
+          "Quest loaded from Roblox:",
+          quest
+        );
+
+      }
+
+      //==============================================
+      // LOAD PLAYER STATS
+      //==============================================
+
+      const updatedStats = {
+
+        points:
+          Number(player.points) || 0,
+
+        tickets:
+          Number(player.tickets) || 0,
+
+        questsCompleted:
+          Number(player.quests_completed) || 0,
+
+      };
+
+      setPlayerStats(
+        updatedStats
+      );
+
+      localStorage.setItem(
+        "questLivesStats",
+        JSON.stringify(updatedStats)
+      );
+
+      console.log(
+        "Player stats loaded from Roblox:",
+        updatedStats
+      );
+
+    } else {
+
+      console.log(
+        "No player data was found."
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Failed to load player data from Quest Lives API:",
+      error
+    );
+
+    setConnectionError(true);
+
+  } finally {
+
+    setLoadingQuest(false);
+
   }
 
-  //==================================================
-  // CONTEXT
-  //==================================================
+}
 
-  return (
-    <QuestContext.Provider
-      value={{
-        currentQuest,
-        spinQuest,
-        loadingQuest,
-        connectionError
-      }}
-    >
-      {children}
-    </QuestContext.Provider>
-  );
+loadPlayerDataFromRoblox();
+
+}, []);
+
+//==================================================
+// LOCAL QUEST SPIN
+//==================================================
+
+function spinQuest() {
+
+```
+const newQuest =
+  quests[
+    Math.floor(
+      Math.random() * quests.length
+    )
+  ];
+
+setCurrentQuest(
+  newQuest
+);
+
+localStorage.setItem(
+  "currentQuest",
+  JSON.stringify(newQuest)
+);
+```
+
+}
+
+//==================================================
+// CONTEXT
+//==================================================
+
+return (
+
+<QuestContext.Provider
+  value={{
+
+    currentQuest,
+
+    setCurrentQuest,
+
+    spinQuest,
+
+    playerStats,
+
+    setPlayerStats,
+
+    loadingQuest,
+
+    connectionError
+
+  }}
+>
+
+  {children}
+
+</QuestContext.Provider>
+
+);
+
 }

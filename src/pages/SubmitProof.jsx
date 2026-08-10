@@ -6,6 +6,9 @@ import PointsGUI from "../GUIS/Points.png";
 const API_URL =
   "https://quest-lives.vercel.app/api/quest";
 
+const QLAI_URL =
+  "https://quest-lives.vercel.app/api/qlai";
+
 const ROBLOX_USER_ID =
   "343054291";
 
@@ -27,6 +30,9 @@ function SubmitProof() {
 
   const [confidence, setConfidence] =
     useState(null);
+
+  const [reason, setReason] =
+    useState("");
 
   const questName =
     currentQuest?.name ||
@@ -62,6 +68,127 @@ function SubmitProof() {
     setStatus("waiting");
 
     setConfidence(null);
+
+    setReason("");
+  }
+
+  //==================================================
+  // CONVERT IMAGE TO BASE64
+  //==================================================
+
+  function imageToBase64(imageFile) {
+    return new Promise(
+      (resolve, reject) => {
+        const reader =
+          new FileReader();
+
+        reader.onload = () => {
+          const result =
+            reader.result;
+
+          if (
+            typeof result !== "string"
+          ) {
+            reject(
+              new Error(
+                "Failed to read image."
+              )
+            );
+
+            return;
+          }
+
+          const base64 =
+            result.split(",")[1];
+
+          resolve(base64);
+        };
+
+        reader.onerror = () => {
+          reject(
+            new Error(
+              "Failed to read image."
+            )
+          );
+        };
+
+        reader.readAsDataURL(
+          imageFile
+        );
+      }
+    );
+  }
+
+  //==================================================
+  // REAL QLAI ANALYSIS
+  //==================================================
+
+  async function analyzeWithQLAI() {
+    if (!file) {
+      throw new Error(
+        "No proof file selected."
+      );
+    }
+
+    if (
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+      throw new Error(
+        "QLAI image analysis currently requires an image."
+      );
+    }
+
+    console.log(
+      "QLAI is analyzing proof..."
+    );
+
+    const image =
+      await imageToBase64(file);
+
+    const response =
+      await fetch(QLAI_URL, {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          image,
+
+          mimeType:
+            file.type,
+
+          questName,
+
+          questDescription:
+            currentQuest?.description ||
+            "",
+        }),
+      });
+
+    const data =
+      await response.json();
+
+    console.log(
+      "QLAI response:",
+      data
+    );
+
+    if (
+      !response.ok ||
+      !data.success
+    ) {
+      throw new Error(
+        data.error ||
+        "QLAI analysis failed."
+      );
+    }
+
+    return data;
   }
 
   //==================================================
@@ -80,15 +207,15 @@ function SubmitProof() {
 
           headers: {
             "Content-Type":
-              "application/json"
+              "application/json",
           },
 
           body: JSON.stringify({
             action: "approve",
 
             userId:
-              ROBLOX_USER_ID
-          })
+              ROBLOX_USER_ID,
+          }),
         });
 
       const data =
@@ -99,10 +226,13 @@ function SubmitProof() {
         data
       );
 
-      if (!response.ok || !data.success) {
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         throw new Error(
           data.error ||
-            `Quest approval failed with status ${response.status}`
+          `Quest approval failed with status ${response.status}`
         );
       }
 
@@ -136,37 +266,57 @@ function SubmitProof() {
 
     setStatus("checking");
 
-    setTimeout(async () => {
+    setConfidence(null);
 
-      const score =
-        Math.floor(
-          Math.random() * 41
-        ) + 60;
+    setReason("");
 
-      setConfidence(score);
+    try {
+      const result =
+        await analyzeWithQLAI();
 
-      if (score >= 75) {
+      setConfidence(
+        result.confidence
+      );
 
+      setReason(
+        result.reason
+      );
+
+      if (result.approved) {
         const approvalSuccessful =
           await approveQuest();
 
         if (approvalSuccessful) {
-
-          setStatus("approved");
-
+          setStatus(
+            "approved"
+          );
         } else {
-
-          setStatus("approvalError");
-
+          setStatus(
+            "approvalError"
+          );
         }
 
       } else {
-
-        setStatus("rejected");
-
+        setStatus(
+          "rejected"
+        );
       }
 
-    }, 3000);
+    } catch (error) {
+      console.error(
+        "QLAI submission error:",
+        error
+      );
+
+      setReason(
+        error.message ||
+        "QLAI could not analyze your proof."
+      );
+
+      setStatus(
+        "analysisError"
+      );
+    }
   }
 
   //==================================================
@@ -181,6 +331,8 @@ function SubmitProof() {
     setFileType("");
 
     setConfidence(null);
+
+    setReason("");
 
     setStatus("waiting");
   }
@@ -345,7 +497,7 @@ function SubmitProof() {
                 </span>
 
                 <h3>
-                  Ready for review
+                  Ready for QLAI review
                 </h3>
 
               </div>
@@ -414,7 +566,7 @@ function SubmitProof() {
             className="submitProofButton"
             onClick={submitProof}
           >
-            Submit Proof for Review
+            Submit Proof for QLAI Review
           </button>
 
         )}
@@ -445,8 +597,9 @@ function SubmitProof() {
 
 
           <p>
-            Comparing your uploaded proof with
-            the requirements of your current mission...
+            QLAI is comparing your uploaded proof
+            with the requirements of your current
+            mission...
           </p>
 
 
@@ -458,7 +611,7 @@ function SubmitProof() {
 
 
           <span className="analysisText">
-            PROCESSING
+            QLAI PROCESSING
           </span>
 
         </div>
@@ -489,6 +642,16 @@ function SubmitProof() {
             the requirements of your mission.
             Your reward has been sent to Roblox.
           </p>
+
+
+          {reason && (
+            <p>
+              <strong>
+                QLAI:
+              </strong>{" "}
+              {reason}
+            </p>
+          )}
 
 
           <div className="resultStats">
@@ -559,6 +722,16 @@ function SubmitProof() {
           </p>
 
 
+          {reason && (
+            <p>
+              <strong>
+                QLAI:
+              </strong>{" "}
+              {reason}
+            </p>
+          )}
+
+
           <div className="resultStats">
 
             <div>
@@ -603,6 +776,44 @@ function SubmitProof() {
 
 
       {/* =========================
+          ANALYSIS ERROR
+      ========================= */}
+
+      {status === "analysisError" && (
+
+        <div className="resultPanel rejectedPanel">
+
+          <div className="resultBadge rejectedBadge">
+            QLAI ERROR
+          </div>
+
+
+          <h2>
+            QLAI Could Not Review Proof
+          </h2>
+
+
+          <p>
+            {reason ||
+              "There was a problem analyzing your proof."
+            }
+          </p>
+
+
+          <button
+            type="button"
+            className="retryButton"
+            onClick={retry}
+          >
+            Try Again
+          </button>
+
+        </div>
+
+      )}
+
+
+      {/* =========================
           REJECTED
       ========================= */}
 
@@ -621,9 +832,20 @@ function SubmitProof() {
 
 
           <p>
-            Your proof did not clearly show that
-            the mission requirements were completed.
+            QLAI determined that your submitted proof
+            did not provide enough evidence that the
+            mission was completed.
           </p>
+
+
+          {reason && (
+            <p>
+              <strong>
+                QLAI:
+              </strong>{" "}
+              {reason}
+            </p>
+          )}
 
 
           <div className="resultStats">

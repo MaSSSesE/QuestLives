@@ -3,72 +3,200 @@ import { QuestContext } from "../QuestContext";
 
 import PointsGUI from "../GUIS/Points.png";
 
+const API_URL =
+  "https://quest-lives.vercel.app/api/quest";
+
+const ROBLOX_USER_ID =
+  "343054291";
+
 function SubmitProof() {
-  const { currentQuest, spinQuest } = useContext(QuestContext);
+  const { currentQuest, spinQuest } =
+    useContext(QuestContext);
 
-  const [file, setFile] = useState(null);
-  const [fileURL, setFileURL] = useState("");
-  const [fileType, setFileType] = useState("");
+  const [file, setFile] =
+    useState(null);
 
-  const [status, setStatus] = useState("waiting");
-  const [confidence, setConfidence] = useState(null);
+  const [fileURL, setFileURL] =
+    useState("");
+
+  const [fileType, setFileType] =
+    useState("");
+
+  const [status, setStatus] =
+    useState("waiting");
+
+  const [confidence, setConfidence] =
+    useState(null);
 
   const questName =
-    currentQuest?.name || "NO QUEST SELECTED";
+    currentQuest?.name ||
+    "NO QUEST SELECTED";
 
   const questReward =
     currentQuest?.reward || 0;
 
+  //==================================================
+  // FILE SELECTION
+  //==================================================
+
   function handleFileChange(event) {
-    const selectedFile = event.target.files[0];
+    const selectedFile =
+      event.target.files[0];
 
     if (!selectedFile) {
       return;
     }
 
     setFile(selectedFile);
-    setFileURL(URL.createObjectURL(selectedFile));
-    setFileType(selectedFile.type);
+
+    setFileURL(
+      URL.createObjectURL(
+        selectedFile
+      )
+    );
+
+    setFileType(
+      selectedFile.type
+    );
 
     setStatus("waiting");
+
     setConfidence(null);
   }
 
-  function submitProof() {
-    if (!file || status === "checking") {
+  //==================================================
+  // APPROVE QUEST THROUGH API
+  //==================================================
+
+  async function approveQuest() {
+    try {
+      console.log(
+        "Sending quest approval to Quest Lives API..."
+      );
+
+      const response =
+        await fetch(API_URL, {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+            action: "approve",
+
+            userId:
+              ROBLOX_USER_ID
+          })
+        });
+
+      const data =
+        await response.json();
+
+      console.log(
+        "Quest approval API response:",
+        data
+      );
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error ||
+            `Quest approval failed with status ${response.status}`
+        );
+      }
+
+      console.log(
+        "QUEST APPROVAL SENT SUCCESSFULLY!"
+      );
+
+      return true;
+
+    } catch (error) {
+      console.error(
+        "Failed to approve quest:",
+        error
+      );
+
+      return false;
+    }
+  }
+
+  //==================================================
+  // SUBMIT PROOF
+  //==================================================
+
+  async function submitProof() {
+    if (
+      !file ||
+      status === "checking"
+    ) {
       return;
     }
 
     setStatus("checking");
 
-    setTimeout(() => {
-      const score = Math.floor(Math.random() * 41) + 60;
+    setTimeout(async () => {
+
+      const score =
+        Math.floor(
+          Math.random() * 41
+        ) + 60;
 
       setConfidence(score);
 
       if (score >= 75) {
-        setStatus("approved");
+
+        const approvalSuccessful =
+          await approveQuest();
+
+        if (approvalSuccessful) {
+
+          setStatus("approved");
+
+        } else {
+
+          setStatus("approvalError");
+
+        }
+
       } else {
+
         setStatus("rejected");
+
       }
+
     }, 3000);
   }
 
+  //==================================================
+  // RETRY
+  //==================================================
+
   function retry() {
     setFile(null);
+
     setFileURL("");
+
     setFileType("");
+
     setConfidence(null);
+
     setStatus("waiting");
   }
 
+  //==================================================
+  // SPIN AGAIN
+  //==================================================
+
   function spinAgain() {
     spinQuest();
+
     retry();
   }
 
   return (
-    <div className="proofPage">
+    <div>
 
       {/* =========================
           HERO
@@ -231,7 +359,9 @@ function SubmitProof() {
 
             <div className="previewContent">
 
-              {fileType.startsWith("image") && (
+              {fileType.startsWith(
+                "image"
+              ) && (
                 <img
                   src={fileURL}
                   alt="Proof"
@@ -240,7 +370,9 @@ function SubmitProof() {
               )}
 
 
-              {fileType.startsWith("video") && (
+              {fileType.startsWith(
+                "video"
+              ) && (
                 <video
                   controls
                   className="proofMedia"
@@ -250,7 +382,8 @@ function SubmitProof() {
                     type={fileType}
                   />
 
-                  Your browser does not support video playback.
+                  Your browser does not support
+                  video playback.
                 </video>
               )}
 
@@ -273,7 +406,9 @@ function SubmitProof() {
         )}
 
 
-        {status === "waiting" && file && (
+        {status === "waiting" &&
+          file && (
+
           <button
             type="button"
             className="submitProofButton"
@@ -281,6 +416,7 @@ function SubmitProof() {
           >
             Submit Proof for Review
           </button>
+
         )}
 
       </div>
@@ -291,6 +427,7 @@ function SubmitProof() {
       ========================= */}
 
       {status === "checking" && (
+
         <div className="analysisPanel">
 
           <div className="aiStatus">
@@ -325,6 +462,7 @@ function SubmitProof() {
           </span>
 
         </div>
+
       )}
 
 
@@ -333,6 +471,7 @@ function SubmitProof() {
       ========================= */}
 
       {status === "approved" && (
+
         <div className="resultPanel approvedPanel">
 
           <div className="resultBadge">
@@ -348,6 +487,7 @@ function SubmitProof() {
           <p>
             QLAI confirmed that your proof matches
             the requirements of your mission.
+            Your reward has been sent to Roblox.
           </p>
 
 
@@ -390,6 +530,75 @@ function SubmitProof() {
           </button>
 
         </div>
+
+      )}
+
+
+      {/* =========================
+          APPROVAL ERROR
+      ========================= */}
+
+      {status === "approvalError" && (
+
+        <div className="resultPanel rejectedPanel">
+
+          <div className="resultBadge rejectedBadge">
+            CONNECTION ERROR
+          </div>
+
+
+          <h2>
+            Quest Approval Failed
+          </h2>
+
+
+          <p>
+            QLAI approved your proof, but Quest Lives
+            could not send the approval to Roblox.
+            Your reward has NOT been given.
+          </p>
+
+
+          <div className="resultStats">
+
+            <div>
+
+              <span>
+                AI CONFIDENCE
+              </span>
+
+              <strong>
+                {confidence}%
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                STATUS
+              </span>
+
+              <strong>
+                RETRY
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <button
+            type="button"
+            className="retryButton"
+            onClick={retry}
+          >
+            Try Again
+          </button>
+
+        </div>
+
       )}
 
 
@@ -398,6 +607,7 @@ function SubmitProof() {
       ========================= */}
 
       {status === "rejected" && (
+
         <div className="resultPanel rejectedPanel">
 
           <div className="resultBadge rejectedBadge">
@@ -455,6 +665,7 @@ function SubmitProof() {
           </button>
 
         </div>
+
       )}
 
     </div>

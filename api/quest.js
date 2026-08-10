@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
   try {
     //==================================================
-    // CREATE PLAYERS TABLE
+    // CREATE / UPDATE PLAYERS TABLE
     //==================================================
 
     await sql`
@@ -48,8 +48,26 @@ export default async function handler(req, res) {
         points INTEGER NOT NULL DEFAULT 0,
         tickets INTEGER NOT NULL DEFAULT 0,
         quests_completed INTEGER NOT NULL DEFAULT 0,
+        quest_approved BOOLEAN NOT NULL DEFAULT FALSE,
+        quest_claimed BOOLEAN NOT NULL DEFAULT FALSE,
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
+    `;
+
+    //==================================================
+    // ADD NEW COLUMNS TO EXISTING PLAYERS TABLE
+    //==================================================
+
+    await sql`
+      ALTER TABLE players
+      ADD COLUMN IF NOT EXISTS quest_approved BOOLEAN
+      NOT NULL DEFAULT FALSE
+    `;
+
+    await sql`
+      ALTER TABLE players
+      ADD COLUMN IF NOT EXISTS quest_claimed BOOLEAN
+      NOT NULL DEFAULT FALSE
     `;
 
     //==================================================
@@ -75,6 +93,8 @@ export default async function handler(req, res) {
           points,
           tickets,
           quests_completed,
+          quest_approved,
+          quest_claimed,
           updated_at
         FROM players
         WHERE roblox_user_id =
@@ -124,24 +144,39 @@ export default async function handler(req, res) {
         INSERT INTO players (
           roblox_user_id,
           current_quest,
+          quest_approved,
+          quest_claimed,
           updated_at
         )
         VALUES (
           ${String(userId)},
           ${JSON.stringify(quest)}::jsonb,
+          FALSE,
+          FALSE,
           NOW()
         )
         ON CONFLICT (roblox_user_id)
         DO UPDATE SET
           current_quest =
             EXCLUDED.current_quest,
-          updated_at = NOW()
+
+          quest_approved =
+            FALSE,
+
+          quest_claimed =
+            FALSE,
+
+          updated_at =
+            NOW()
+
         RETURNING
           roblox_user_id,
           current_quest,
           points,
           tickets,
           quests_completed,
+          quest_approved,
+          quest_claimed,
           updated_at
       `;
 
@@ -178,4 +213,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

@@ -25,6 +25,24 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   //==================================================
+  // DIAGNOSTIC
+  //==================================================
+  // IMPORTANT:
+  // These only report whether the environment variables
+  // exist. They NEVER print the actual secret values.
+  //==================================================
+
+  console.log(
+    "SUPABASE_URL exists:",
+    !!process.env.SUPABASE_URL
+  );
+
+  console.log(
+    "SUPABASE_SERVICE_ROLE_KEY exists:",
+    !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+
+  //==================================================
   // CORS
   //==================================================
 

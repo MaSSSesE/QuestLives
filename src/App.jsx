@@ -1,17 +1,18 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
-import Home from "./pages/Home";
 import SubmitProof from "./pages/SubmitProof";
+import Settings from "./pages/Settings";
 
 import "./App.css";
 
 function AnimatedPage({ children }) {
   return (
     <motion.div
+      className="animatedPage"
       initial={{
         opacity: 0,
-        y: 20,
+        y: 18,
       }}
       animate={{
         opacity: 1,
@@ -19,10 +20,10 @@ function AnimatedPage({ children }) {
       }}
       exit={{
         opacity: 0,
-        y: -20,
+        y: -18,
       }}
       transition={{
-        duration: 0.35,
+        duration: 0.3,
         ease: "easeOut",
       }}
     >
@@ -37,12 +38,14 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+
         <Route
           path="/"
           element={
-            <AnimatedPage>
-              <Home />
-            </AnimatedPage>
+            <Navigate
+              to="/submit-proof"
+              replace
+            />
           }
         />
 
@@ -56,13 +59,24 @@ function AnimatedRoutes() {
         />
 
         <Route
-          path="*"
+          path="/settings"
           element={
             <AnimatedPage>
-              <Home />
+              <Settings />
             </AnimatedPage>
           }
         />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/submit-proof"
+              replace
+            />
+          }
+        />
+
       </Routes>
     </AnimatePresence>
   );
